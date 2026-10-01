@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DealStage {
+  LEAD
+  CONTACTED
+  PROPOSAL
+  WON
+  LOST
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  customers    Customer[]
+  createdAt    DateTime   @default(now())
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  deals     Deal[]
+  notes     Note[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model Deal {
+  id         String    @id @default(cuid())
+  title      String
+  amount     Decimal   @db.Decimal(12, 2)
+  stage      DealStage @default(LEAD)
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+
+  @@index([customerId, stage])
+}
+
+model Note {
+  id         String   @id @default(cuid())
+  body       String
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([customerId])
+}
